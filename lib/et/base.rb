@@ -97,7 +97,11 @@ module ET
         soap.body = body
       end
 
-      { overall_status: resp[:overall_status], request_id: resp[:request_id], results: resp[:results].map { |hash| new(hash) } }
+      if resp[:overall_status] == "OK"
+        { overall_status: resp[:overall_status], request_id: resp[:request_id], results: resp[:results].map { |hash| new(hash) } }
+      else
+        { overall_status: resp[:overall_status], request_id: resp[:request_id] }
+      end
     end
 
     # Saves a collection of ET::Base objects.
