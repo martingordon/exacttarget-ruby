@@ -1,3 +1,7 @@
+class ET::String
+  ACRONYMS = [ "ID" ]
+end
+
 class String
   unless self.new.respond_to? :pluralize
     # A very simple `pluralize` method that works for every object in the ExactTarget API.
@@ -8,7 +12,7 @@ class String
 
   unless self.new.respond_to? :camelize
     def camelize
-      split('_').map(&:capitalize).join
+      split('_').map { |str| ET::String::ACRONYMS.include?(str.upcase) ? str.upcase : str.capitalize }.join
     end
   end
 end
