@@ -6,13 +6,6 @@ module ET
       S6: 'https://webservice.s6.exacttarget.com/Service.asmx'
     }
 
-    # ET is stupid and the SOAPAction header doesn't always match the name of the top-level body tag. Here we map the
-    # inconsistencies.
-    SOAP_ACTION_HEADERS = {
-      version_info_request_msg: "VersionInfo",
-      retrieve_request_msg: "Retrieve"
-    }
-
     attr_accessor :id, :errors
 
     @@username = nil
@@ -51,12 +44,13 @@ module ET
     #
     # Pass in a block and assign a hash to soap.body with a structure appropriate to the method call.
     def self.request(method, &_block)
-      resp = api.request(:wsdl, method.to_s.camelize) do
-        http.headers["SOAPAction"] = SOAP_ACTION_HEADERS[method] if SOAP_ACTION_HEADERS.has_key?(method)
+      resp = api.request(:wsdl, "#{method.to_s}_request_msg".camelize) do
+        http.headers["SOAPAction"] = method.to_s.camelize
         evaluate(&_block) if _block # See Savon::Client#evaluate; necessary to preserve scope.
+        soap.body.camelize_keys!.set_ns!("wsdl")
       end
 
-      resp.body[method.to_s.gsub("request", "response").to_sym]
+      resp.body["#{method}_response_msg".to_sym]
     end
 
     # Sets up the Savon SOAP client object (if necessary) and returns it.
@@ -74,7 +68,7 @@ module ET
     # Finds objects matching the `filter` (an ET::Filter instance). Returns only the properties requested.
     # If subsequent pages of results are required, pass the previous request ID as the `continue_request` parameter.
     def self.find(properties, filter = nil, continue_request = nil)
-      resp = request(:retrieve_request_msg) do
+      resp = request(:retrieve) do
         body = {
           retrieve_request: { object_type: et_object_type }
         }
@@ -83,7 +77,7 @@ module ET
         body[:retrieve_request][:continue_request] = continue_request if continue_request.present?
         body[:retrieve_request][:properties] = properties.map { |p| p.is_a?(Symbol) ? p.to_s.camelize : p }
 
-        soap.body = body.camelize_keys!.set_ns!("wsdl")
+        soap.body = body
       end
 
       { overall_status: resp[:overall_status], request_id: resp[:request_id], results: resp[:results].map { |hash| new(hash) } }
