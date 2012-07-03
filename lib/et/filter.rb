@@ -10,9 +10,9 @@ module ET
       return if args.length == 0
       raise ArgumentError, "wrong number of arguments (#{args.length} for 2..3)" if args.length != 2 and args.length != 3
 
-      property = args.first
-      simple_operator = args.length == 2 ? "equals" : args[1]
-      value = args.last
+      self.property = args.first
+      self.simple_operator = args.length == 2 ? "Equals" : args[1]
+      self.value = args.last
     end
 
     def to_hash
