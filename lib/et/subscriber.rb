@@ -1,6 +1,7 @@
 module ET
   class Subscriber < Base
-    attr_accessor :email_address, :attributes
+    attr_accessor :email_address, :attributes, :subscriber_key, :unsubscribed_date, :status, :lists
+    find_properties :email_address, :attributes, :subscriber_key, :unsubscribed_date, :status, :lists
 
     def reload
       return false if self.email_address.blank?
