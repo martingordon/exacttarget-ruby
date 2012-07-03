@@ -11,6 +11,20 @@ module ET
     @@username = nil
     @@password = nil
 
+    # Method to get/set the properties for the `find` method.
+    # If called with arguments (an array of symbols or strings), those arguments become the find parameters for this
+    # class.
+    # If called with no arguments, returns the find properties for this class, which include the superclass' find
+    # properties as well.
+    def self.find_properties(*props)
+      if props.length == 0
+        @find_properties || []
+      else
+        @find_properties ||= []
+        @find_properties += props
+      end
+    end
+
     def self.username=(username)
       @api = nil
       @@username = username
@@ -65,13 +79,16 @@ module ET
       @api
     end
 
-    # Finds objects matching the `filter` (an ET::Filter instance). Returns only the properties requested.
+    # Finds objects matching the `filter` (an ET::Filter instance). Returns only the properties requested, If no
+    # properties are passed, then the find will use the default find properties set for the class.
     # If subsequent pages of results are required, pass the previous request ID as the `continue_request` parameter.
-    def self.find(properties, filter = nil, continue_request = nil)
+    def self.find(filter = nil, continue_request = nil, properties = nil)
       resp = request(:retrieve) do
         body = {
           retrieve_request: { object_type: et_object_type }
         }
+
+        properties ||= self.find_properties.map(&:to_s).map(&:camelize)
 
         body[:retrieve_request][:filter] = filter.to_hash if filter.present? and filter.to_hash.present?
         body[:retrieve_request][:continue_request] = continue_request if continue_request.present?
